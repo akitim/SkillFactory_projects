@@ -33,17 +33,38 @@
     
 ----------------Вопрос 4--------------------
 --  Сколько состоявшихся (фактических) рейсов было совершено между 1 апреля 2017 года и 1 сентября 2017 года?
-select count(f.actual_departure )
-FROM dst_project.flights f
-WHERE f.status != 'Cancelled' and
-    f.actual_arrival between '04-01-2017, 00:00'::timestamp and '09-01-2017, 00:00'::timestamp
 
+-- SELECT count(f.flight_id) num_of_flights
+-- FROM dst_project.flights f
+-- WHERE f.status != 'Cancelled'
+--   AND f.actual_arrival BETWEEN '04-01-2017, 00:00'::TIMESTAMP AND '09-01-2017, 00:00'::TIMESTAMP
 -- =========================================
 ---------------Задание 4.2------------------
 -- Вопрос 1. Сколько всего рейсов было отменено по данным базы?
 
-
+-- SELECT count(f.flight_id)
+-- FROM dst_project.flights f
+-- WHERE f.status = 'Cancelled'
 -- =========================================
+-- Вопрос 2. Сколько самолетов моделей типа Boeing, Sukhoi Superjet, Airbus находится в базе авиаперевозок?
+
+-- SELECT count(f.flight_id)
+-- FROM dst_project.flights f
+--         left join dst_project.aircrafts a
+--             on f.aircraft_code = a.aircraft_code
+-- WHERE true
+
+SELECT 'Boeing' aircraft_type, count(a.model) number
+FROM dst_project.aircrafts a
+where a.model like '%Boeing%'
+union all
+SELECT 'Sukhoi Superjet' aircraft_type, count(a.model) number
+FROM dst_project.aircrafts a
+where a.model like '%Sukhoi Superjet%'
+union all
+SELECT 'Airbus' aircraft_type, count(a.model) number
+FROM dst_project.aircrafts a
+where a.model like '%Airbus%'
 -- =========================================
 -- =========================================
 -- =========================================
