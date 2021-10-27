@@ -1,0 +1,30 @@
+-- =====================================================
+----------------------Задание 4.1
+-- SELECT count(DISTINCT f.status)
+-- FROM dst_project.flights f
+----------------------Задание 4.2
+-----------------------Вопрос 2-------------------------
+-- SELECT DISTINCT f.status status,
+--                 count(f.status)
+-- FROM dst_project.flights f
+-- WHERE status in ('On Time',
+--                  'Departed')
+-- GROUP BY 1
+-- ORDER BY 2 DESC
+-- UNION ALL
+-- SELECT 'total' total,
+--               count(f.status)
+-- FROM dst_project.flights f
+-- WHERE f.status in ('On Time',
+--                   'Departed')
+-----------------------Вопрос 3-------------------------
+-- SELECT count(s.seat_no) Num_of_seats_in_Boeing_773
+-- FROM dst_project.seats s
+-- LEFT JOIN dst_project.aircrafts a ON s.aircraft_code=a.aircraft_code
+-- WHERE a.model = 'Boeing 777-300'
+-----------------------Вопрос 4-------------------------
+select *
+FROM dst_project.flights f
+WHERE f.status != 'Cancelled' and actual_arrival is not null and
+
+        
