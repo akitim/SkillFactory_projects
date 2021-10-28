@@ -171,11 +171,11 @@
 --   LEFT JOIN dst_project.airports a ON f.arrival_airport = a.airport_code
 --   WHERE a.city = 'Anapa')
 
-WITH flights_from_Anapa AS
-  (SELECT *
-   FROM dst_project.flights f
-   LEFT JOIN dst_project.airports a ON f.departure_airport = a.airport_code
-   WHERE a.city = 'Anapa')
+-- WITH flights_from_Anapa AS
+--   (SELECT *
+--   FROM dst_project.flights f
+--   LEFT JOIN dst_project.airports a ON f.departure_airport = a.airport_code
+--   WHERE a.city = 'Anapa')
 
 -- SELECT count(f.actual_arrival)
 -- FROM flights_to_Anapa f
@@ -195,9 +195,49 @@ WITH flights_from_Anapa AS
 
 -- Вопрос 3. Посчитайте количество отмененных рейсов из Анапы за все время.
 
-SELECT count(f.flight_id)
-FROM flights_from_Anapa f
-where f.status='Cancelled'
+-- SELECT count(f.flight_id)
+-- FROM flights_from_Anapa f
+-- where f.status='Cancelled'
+
+-- Вопрос 4. Сколько рейсов из Анапы не летают в Москву?
+
+-- WITH flights_from_Anapa AS
+--   (SELECT *
+--   FROM dst_project.flights f
+--   LEFT JOIN dst_project.airports a ON f.departure_airport = a.airport_code
+--   WHERE a.city = 'Anapa')
+   
+-- SELECT count(f.flight_id)
+-- FROM dst_project.flights f
+-- LEFT JOIN dst_project.airports a ON f.arrival_airport = a.airport_code
+-- WHERE a.city != 'Moscow'
+--   AND f.departure_airport = 'AAQ' -- Сколько рейсов из Анапы в города, отличные от Москвы?
+
+--   SELECT DISTINCT a.city,
+--                   count(f.flight_id)
+--   FROM dst_project.flights f
+--   LEFT JOIN dst_project.airports a ON f.arrival_airport = a.airport_code WHERE a.city != 'Moscow'
+--   AND f.departure_airport = 'AAQ'
+-- GROUP BY 1
+
+-- Вопрос 5. Какая модель самолета летящего на рейсах из Анапы имеет больше всего мест?
+
+WITH aircraft_ext AS
+  (SELECT a.aircraft_code,
+          a.model,
+          a.range,
+          s.seat_no,
+          s.fare_conditions
+   FROM dst_project.aircrafts a
+   JOIN dst_project.seats s ON a.aircraft_code=s.aircraft_code)
+
+SELECT model,
+       count(DISTINCT a.seat_no)
+FROM dst_project.flights f
+LEFT JOIN aircraft_ext a ON f.aircraft_code = a.aircraft_code
+WHERE f.departure_airport = 'AAQ'
+GROUP BY 1
+ORDER BY 2 DESC
 
 -- =========================================
 -- =========================================
