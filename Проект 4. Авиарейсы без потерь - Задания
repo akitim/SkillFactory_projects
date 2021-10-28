@@ -165,36 +165,40 @@
 ---------------Задание 5.1------------------
 -- Вопрос 1. Анапа — курортный город на юге России. Сколько рейсов прибыло в Анапу за 2017 год?
 
-WITH Anapa_flights AS
+-- WITH flights_to_Anapa AS
+--   (SELECT *
+--   FROM dst_project.flights f
+--   LEFT JOIN dst_project.airports a ON f.arrival_airport = a.airport_code
+--   WHERE a.city = 'Anapa')
+
+WITH flights_from_Anapa AS
   (SELECT *
    FROM dst_project.flights f
-   LEFT JOIN dst_project.airports a ON f.arrival_airport = a.airport_code
-   WHERE a.city = 'Anapa' )
+   LEFT JOIN dst_project.airports a ON f.departure_airport = a.airport_code
+   WHERE a.city = 'Anapa')
 
 -- SELECT count(f.actual_arrival)
--- FROM dst_project.flights f
--- JOIN dst_project.airports a ON f.arrival_airport = a.airport_code
--- WHERE a.city = 'Anapa'
---   AND extract(YEAR
+-- FROM flights_to_Anapa f
+-- WHERE extract(YEAR
 --               FROM f.actual_arrival) = 2017
 
 -- Вопрос 2. Сколько рейсов из Анапы вылетело зимой 2017 года?
 
---   SELECT count(f.actual_departure)
---   FROM dst_project.flights f
---   JOIN dst_project.airports a ON f.arrival_airport = a.airport_code WHERE a.city = 'Anapa'
---   AND extract(YEAR
---               FROM f.actual_arrival) = 2017
---   AND extract(MONTH
---               FROM f.actual_arrival) in (12,
---                                          1,
---                                          2)
+-- SELECT count(f.actual_departure)
+-- FROM flights_from_Anapa f
+-- WHERE extract(YEAR
+--           FROM f.actual_arrival) = 2017
+-- AND extract(MONTH
+--           FROM f.actual_arrival) in (12,
+--                                      1,
+--                                      2)
 
 -- Вопрос 3. Посчитайте количество отмененных рейсов из Анапы за все время.
 
-SELECT * --count(f.flight_id)
-FROM Anapa_flights
-where true
+SELECT count(f.flight_id)
+FROM flights_from_Anapa f
+where f.status='Cancelled'
+
 -- =========================================
 -- =========================================
 -- =========================================
