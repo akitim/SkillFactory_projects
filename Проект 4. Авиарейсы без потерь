@@ -102,19 +102,51 @@
 
 -- Вопрос 2. Сколько минут составляет запланированное время полета в самом длительном рейсе?
 
-SELECT extract(HOUR FROM (f.scheduled_arrival - f.scheduled_departure))::real*60 + extract(MINUTE
-        FROM (f.scheduled_arrival - f.scheduled_departure))::real scheduled_flight_time,
-        extract(HOUR FROM (f.actual_arrival - f.actual_departure))::real*60 + extract(MINUTE
-        FROM (f.actual_arrival - f.actual_departure))::real actual_flight_time
-FROM dst_project.flights f
-where (f.actual_arrival - f.actual_departure) is not null
-order by 2 desc
-limit 1
+-- SELECT extract(HOUR
+--               FROM (f.scheduled_arrival - f.scheduled_departure))::real*60 + extract(MINUTE
+--                                                                                       FROM (f.scheduled_arrival - f.scheduled_departure))::real scheduled_flight_time,
+--       extract(HOUR
+--               FROM (f.actual_arrival - f.actual_departure))::real*60 + extract(MINUTE
+--                                                                                 FROM (f.actual_arrival - f.actual_departure))::real actual_flight_time
+-- FROM dst_project.flights f
+-- WHERE (f.actual_arrival - f.actual_departure) IS NOT NULL
+-- ORDER BY 2 DESC
+-- LIMIT 1
 
 -- Вопрос 3. Между какими аэропортами пролегает самый длительный по времени запланированный рейс?
 
+-- SELECT  distinct concat(departure_airport, ' - ',
+--         arrival_airport),
+--         extract(HOUR
+--             FROM (f.scheduled_arrival - f.scheduled_departure))::real*3600.0 + extract(MINUTE
+--                                                                                     FROM (f.scheduled_arrival - f.scheduled_departure))::real*60.0 +
+--                                                                                                                                         extract(SECOND 
+--                                                                                                                                                 FROM (f.scheduled_arrival - f.scheduled_departure))::real
+-- FROM dst_project.flights f
+-- ORDER BY 2 DESC
+
+-- Вопрос 4. Сколько составляет средняя дальность полета среди всех самолетов в минутах? Секунды округляются в меньшую сторону (отбрасываются до минут).
+
+-- SELECT round(avg(extract(HOUR
+--                          FROM (f.actual_arrival - f.actual_departure))::real*60 + extract(MINUTE
+--                                                                                           FROM (f.actual_arrival - f.actual_departure))::real))
+-- FROM dst_project.flights f
 
 -- =========================================
+---------------Задание 4.5------------------
+
+SELECT 'Business' fare_condition,
+                  count(s.fare_conditions) Num_of_seats
+FROM dst_project.seats s
+WHERE s.aircraft_code = 'SU9'
+  AND s.fare_conditions = 'Business'
+UNION ALL
+SELECT 'Economy' fare_condition,
+                 count(s.fare_conditions) Num_of_seats
+FROM dst_project.seats s
+WHERE s.aircraft_code = 'SU9'
+  AND s.fare_conditions = 'Economy'
+ORDER BY 2 DESC
 
 -- =========================================
 -- =========================================
