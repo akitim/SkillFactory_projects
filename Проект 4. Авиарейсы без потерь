@@ -45,27 +45,77 @@
 -- SELECT count(f.flight_id)
 -- FROM dst_project.flights f
 -- WHERE f.status = 'Cancelled'
--- =========================================
+
 -- Вопрос 2. Сколько самолетов моделей типа Boeing, Sukhoi Superjet, Airbus находится в базе авиаперевозок?
 
--- SELECT count(f.flight_id)
--- FROM dst_project.flights f
---         left join dst_project.aircrafts a
---             on f.aircraft_code = a.aircraft_code
--- WHERE true
+-- SELECT 'Boeing' aircraft_type,
+--                 count(a.model) number
+-- FROM dst_project.aircrafts a
+-- WHERE a.model like '%Boeing%'
+-- UNION ALL
+-- SELECT 'Sukhoi Superjet' aircraft_type,
+--                          count(a.model) number
+-- FROM dst_project.aircrafts a
+-- WHERE a.model like '%Sukhoi Superjet%'
+-- UNION ALL
+-- SELECT 'Airbus' aircraft_type,
+--                 count(a.model) number
+-- FROM dst_project.aircrafts a
+-- WHERE a.model like '%Airbus%'
 
-SELECT 'Boeing' aircraft_type, count(a.model) number
-FROM dst_project.aircrafts a
-where a.model like '%Boeing%'
-union all
-SELECT 'Sukhoi Superjet' aircraft_type, count(a.model) number
-FROM dst_project.aircrafts a
-where a.model like '%Sukhoi Superjet%'
-union all
-SELECT 'Airbus' aircraft_type, count(a.model) number
-FROM dst_project.aircrafts a
-where a.model like '%Airbus%'
+-- Вопрос 3. В какой части (частях) света находится больше аэропортов?
+
+-- SELECT 'Europe' world_part,
+--                 count(ap.airport_code)
+-- FROM dst_project.airports ap
+-- WHERE ap.timezone like '%Europe%'
+-- UNION ALL
+-- SELECT 'Asia' world_part,
+--               count(ap.airport_code)
+-- FROM dst_project.airports ap
+-- WHERE ap.timezone like '%Asia%' -- Вопрос 4. У какого рейса была самая большая задержка прибытия за все время сбора данных? Введите id рейса (flight_id).
+
+--   SELECT f.flight_id,
+--          extract(MINUTE
+--                  FROM (f.actual_arrival - f.scheduled_arrival)) --arrival_delay
+-- FROM dst_project.flights f
+-- ORDER BY 2 DESC WITH arrival_delay AS
+--   (SELECT f.flight_id,
+--           extract(DAY
+--                   FROM f.actual_arrival - f.scheduled_arrival)::real*24 + extract(HOUR
+--                                                                                   FROM f.actual_arrival - f.scheduled_arrival)::real + extract(MINUTE
+--                                                                                                                                               FROM f.actual_arrival - f.scheduled_arrival)::real/60 arrival_delay_in_hours
+--   FROM dst_project.flights f)
+
+-- SELECT ad.flight_id
+-- FROM arrival_delay ad
+-- WHERE ad.arrival_delay_in_hours IS NOT NULL
+-- ORDER BY ad.arrival_delay_in_hours DESC
+-- LIMIT 1
+
 -- =========================================
+---------------Задание 4.4------------------
+-- Вопрос 1.  Когда был запланирован самый первый вылет, сохраненный в базе данных?
+
+-- SELECT min(f.scheduled_departure) first_flight_scheduled
+-- FROM dst_project.flights f
+
+-- Вопрос 2. Сколько минут составляет запланированное время полета в самом длительном рейсе?
+
+SELECT extract(HOUR FROM (f.scheduled_arrival - f.scheduled_departure))::real*60 + extract(MINUTE
+        FROM (f.scheduled_arrival - f.scheduled_departure))::real scheduled_flight_time,
+        extract(HOUR FROM (f.actual_arrival - f.actual_departure))::real*60 + extract(MINUTE
+        FROM (f.actual_arrival - f.actual_departure))::real actual_flight_time
+FROM dst_project.flights f
+where (f.actual_arrival - f.actual_departure) is not null
+order by 2 desc
+limit 1
+
+-- Вопрос 3. Между какими аэропортами пролегает самый длительный по времени запланированный рейс?
+
+
+-- =========================================
+
 -- =========================================
 -- =========================================
 -- =========================================
