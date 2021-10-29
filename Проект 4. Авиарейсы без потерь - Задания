@@ -245,25 +245,31 @@
 -- ====================================================================
 ---------------------------ЗАДАЧА ПРОЕКТА------------------------------
 
--- SELECT f.flight_id,
---        f.departure_airport,
---        ap.city arrival_city,
---        extract (HOUR from f.scheduled_arrival - f.scheduled_departure)::real*60 +
---        extract (MINUTE from f.scheduled_arrival - f.scheduled_departure)::real time_in_flight,
+-- SELECT fv.flight_id,
+--        fv.departure_city,
+--        fv.arrival_city,
+--        fv.arrival_airport_name,
+--        extract (HOUR from fv.scheduled_duration)::real*60 +
+--        extract (MINUTE from fv.scheduled_duration)::real flight_duration,
 --        ac.model,
+--        count(distinct seat_no)
 --        
           
           
 
-select *
-FROM dst_project.flights f 
-            left join dst_project.aircrafts ac on f.aircraft_code = ac.aircraft_code
-            left join dst_project.airports ap on f.arrival_airport = ap.airport_code
-            left join dst_project.seats s on f.aircraft_code = s.aircraft_code
-WHERE departure_airport = 'AAQ'
-  AND (date_trunc('month', scheduled_departure) in ('2017-01-01', '2017-02-01', '2017-12-01'))
-  AND status not in ('Cancelled')
+-- select *
+-- FROM dst_project.flights_v fv 
+--             left join dst_project.aircrafts ac on fv.aircraft_code = ac.aircraft_code
+-- /*             left join dst_project.airports ap on fv.arrival_airport = ap.airport_code*/
+--             left join dst_project.seats s on fv.aircraft_code = s.aircraft_code
+-- WHERE fv.departure_airport = 'AAQ'
+--   AND (date_trunc('month', fv.scheduled_departure) in ('2017-01-01', '2017-02-01', '2017-12-01'))
+--   AND fv.status not in ('Cancelled')
   
-
+select fv.actual_duration, fv.actual_arrival - fv.actual_departure
+from dst_project.flights_v fv
+WHERE fv.departure_airport = 'AAQ'
+  AND (date_trunc('month', fv.scheduled_departure) in ('2017-01-01', '2017-02-01', '2017-12-01'))
+  AND fv.status not in ('Cancelled')
 -- ====================================================================
 
