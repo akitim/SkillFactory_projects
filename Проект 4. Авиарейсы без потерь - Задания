@@ -258,6 +258,7 @@ FROM dst_project.flights_v fv
             left join dst_project.aircrafts ac on fv.aircraft_code = ac.aircraft_code
 /*             left join dst_project.airports ap on fv.arrival_airport = ap.airport_code*/
             left join dst_project.seats s on fv.aircraft_code = s.aircraft_code
+            left join dst_project.seats s on fv.aircraft_code = s.aircraft_code
 WHERE fv.departure_airport = 'AAQ'
   AND (date_trunc('month', fv.scheduled_departure) in ('2017-01-01', '2017-02-01', '2017-12-01'))
  AND fv.status not in ('Cancelled')
@@ -268,10 +269,20 @@ WHERE fv.departure_airport = 'AAQ'
 -- where a.model in ('Boeing 737-300', 'Sukhoi Superjet-100')
 -- group by 1
 
+
 -- select fv.actual_duration, fv.actual_arrival - fv.actual_departure
 -- from dst_project.flights_v fv
 -- WHERE fv.departure_airport = 'AAQ'
 --   AND (date_trunc('month', fv.scheduled_departure) in ('2017-01-01', '2017-02-01', '2017-12-01'))
 --   AND fv.status not in ('Cancelled')
 -- ====================================================================
-
+/*
+                                    дата       руб./т
+стоимость авиатоплива Анапа |январь  2017 г. | 41435
+                            |февраль 2017 г. | 39553
+                            |декабрь 2017 г. | 47101
+                            
+расход топлива |    кг/ч    |  г/пасс.- км
+    SSJ-100    | 1700-1900  |     17-19
+    B737-300   |    2400    |       26
+*/
