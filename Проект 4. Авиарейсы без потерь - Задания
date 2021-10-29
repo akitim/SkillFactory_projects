@@ -172,9 +172,9 @@
 --   (SELECT *
 --   FROM dst_project.flights f
 --   LEFT JOIN dst_project.airports a ON f.arrival_airport = a.airport_code
---   WHERE a.city = 'Anapa')
-
--- WITH flights_from_Anapa AS
+--   WHERE a.city = 'Anapa'),
+  
+--      flights_from_Anapa AS
 --   (SELECT *
 --   FROM dst_project.flights f
 --   LEFT JOIN dst_project.airports a ON f.departure_airport = a.airport_code
@@ -245,25 +245,46 @@
 -- ====================================================================
 ---------------------------ЗАДАЧА ПРОЕКТА------------------------------
 
+with flight_distance_from_Anapa as (
+select
+        'Москва' arrival_city,
+        1208 flight_distance
+union
+select
+        'Новокузнецк' arrival_city,
+        3661 flight_distance
+union
+select
+        'Белгород' arrival_city,
+        636 flight_distance
+), flight_duration_min as (
+select fv.scheduled_duration flight_duration,
+       extract (HOUR from fv.scheduled_duration)::real*60 + extract (MINUTE from fv.scheduled_duration)::real flight_duration_min
+from dst_project.flights_v fv)
+
 SELECT fv.flight_id,
         fv.departure_city,
         fv.arrival_city,
         fv.arrival_airport_name,
-        extract (HOUR from fv.scheduled_duration)::real*60 +
-        extract (MINUTE from fv.scheduled_duration)::real flight_duration,
-        2*6371*asin(|/( sin( (radians(ap.latitude) - 0.79) / 2.0 ) ^ 2.0 + cos(radians(ap.latitude))*cos(0.79)*sin( (radians(ap.longitude) - 0.65) / 2.0) ^ 2.0)) flight_distance,
+        fdm.flight_duration_min,
+        /*2*6371*asin(|/( sin( (radians(ap.latitude) - 0.79) / 2.0 ) ^ 2.0 + cos(radians(ap.latitude))*cos(0.79)*sin( (radians(ap.longitude) - 0.65) / 2.0) ^ 2.0)) flight_distance,*/
+        fdfa.flight_distance,
+        fdm.flight_duration_min,
+        fdfa.flight_distance / fdm.flight_duration_min*60 avg_speed,
         ac.model,
         count(distinct seat_no) seats_in_a_plane
 -- select *
-FROM dst_project.flights_v fv 
+FROM dst_project.flights_v fv
             left join dst_project.aircrafts ac on fv.aircraft_code = ac.aircraft_code
             left join dst_project.airports ap on fv.arrival_airport = ap.airport_code
             left join dst_project.seats s on fv.aircraft_code = s.aircraft_code
             /*left join dst_project.seats s on fv.aircraft_code = s.aircraft_code*/
-WHERE fv.departure_airport = 'AAQ'
+            left join flight_distance_from_Anapa fdfa on fdfa.arrival_city = fv.arrival_city
+            left join flight_duration_min fdm on fv.scheduled_duration = fdm.flight_duration
+WHERE fv.departure_city = 'Анапа'
   AND (date_trunc('month', fv.scheduled_departure) in ('2017-01-01', '2017-02-01', '2017-12-01'))
  AND fv.status not in ('Cancelled')
-group by 1, 2, 3, 4, 5, 6, 7
+group by 1, 2, 3, 4, 5, 6, 7, 8, 9
   
 -- select a.model, count(distinct seat_no) seats_in_a_plane
 -- from dst_project.seats s join dst_project.aircrafts a on s.aircraft_code = a.aircraft_code
