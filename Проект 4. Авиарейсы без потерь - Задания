@@ -246,30 +246,32 @@
 ---------------------------ЗАДАЧА ПРОЕКТА------------------------------
 
 -- SELECT fv.flight_id,
---        fv.departure_city,
---        fv.arrival_city,
---        fv.arrival_airport_name,
---        extract (HOUR from fv.scheduled_duration)::real*60 +
---        extract (MINUTE from fv.scheduled_duration)::real flight_duration,
---        ac.model,
---        count(distinct seat_no)
---        
-          
-          
+--         fv.departure_city,
+--         fv.arrival_city,
+--         fv.arrival_airport_name,
+--         extract (HOUR from fv.scheduled_duration)::real*60 +
+--         extract (MINUTE from fv.scheduled_duration)::real flight_duration,
+--         ac.model,
+--         count(distinct seat_no) seats_in_a_plane
+select *
+FROM dst_project.flights_v fv 
+            left join dst_project.aircrafts ac on fv.aircraft_code = ac.aircraft_code
+/*             left join dst_project.airports ap on fv.arrival_airport = ap.airport_code*/
+            left join dst_project.seats s on fv.aircraft_code = s.aircraft_code
+WHERE fv.departure_airport = 'AAQ'
+  AND (date_trunc('month', fv.scheduled_departure) in ('2017-01-01', '2017-02-01', '2017-12-01'))
+ AND fv.status not in ('Cancelled')
+-- group by 1, 2, 3, 4, 5, 6
+  
+-- select a.model, count(distinct seat_no) seats_in_a_plane
+-- from dst_project.seats s join dst_project.aircrafts a on s.aircraft_code = a.aircraft_code
+-- where a.model in ('Boeing 737-300', 'Sukhoi Superjet-100')
+-- group by 1
 
--- select *
--- FROM dst_project.flights_v fv 
---             left join dst_project.aircrafts ac on fv.aircraft_code = ac.aircraft_code
--- /*             left join dst_project.airports ap on fv.arrival_airport = ap.airport_code*/
---             left join dst_project.seats s on fv.aircraft_code = s.aircraft_code
+-- select fv.actual_duration, fv.actual_arrival - fv.actual_departure
+-- from dst_project.flights_v fv
 -- WHERE fv.departure_airport = 'AAQ'
 --   AND (date_trunc('month', fv.scheduled_departure) in ('2017-01-01', '2017-02-01', '2017-12-01'))
 --   AND fv.status not in ('Cancelled')
-  
-select fv.actual_duration, fv.actual_arrival - fv.actual_departure
-from dst_project.flights_v fv
-WHERE fv.departure_airport = 'AAQ'
-  AND (date_trunc('month', fv.scheduled_departure) in ('2017-01-01', '2017-02-01', '2017-12-01'))
-  AND fv.status not in ('Cancelled')
 -- ====================================================================
 
