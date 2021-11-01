@@ -289,7 +289,7 @@ SELECT fv.flight_id,                                                --#1
         /*2*6371*asin(|/( sin( (radians(ap.latitude) - 0.79) / 2.0 ) ^ 2.0 + cos(radians(ap.latitude))*cos(0.79)*sin( (radians(ap.longitude) - 0.65) / 2.0) ^ 2.0)) flight_distance,*/
         fdfa.flight_distance,                                       --#6
         fdfa.flight_distance / fdm.flight_duration_in_hr avg_speed, --#7
-        ac.model,                                                   --#8
+        ac.model aircraft_model,                                    --#8
         count(distinct seat_no) seats_in_a_plane,                   --#9
         ss.seats_sold seats_sold,                                   --#10
         gpf.gain_per_flight gain_per_flight                         --#11
