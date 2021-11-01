@@ -273,22 +273,26 @@ WHERE fv.departure_city = 'Анапа'
  AND (date_trunc('month', fv.scheduled_departure) in ('2017-01-01', '2017-02-01', '2017-12-01'))
  AND fv.status not in ('Cancelled')
 group by 1
-) 
+), gain_per_flight as (
+select
+        tf.flight_id flight_id,
+        sum(tf.amount) gain_per_flight
+from dst_project.ticket_flights tf
+group by 1
+)
 
 SELECT fv.flight_id,                                                --#1
         fv.departure_city,                                          --#2
         fv.arrival_city,                                            --#3
-        fv.actual_departure,                                        --#4
+        fv.scheduled_departure,                                     --#4
         fdm.flight_duration_in_hr,                                  --#5
         /*2*6371*asin(|/( sin( (radians(ap.latitude) - 0.79) / 2.0 ) ^ 2.0 + cos(radians(ap.latitude))*cos(0.79)*sin( (radians(ap.longitude) - 0.65) / 2.0) ^ 2.0)) flight_distance,*/
         fdfa.flight_distance,                                       --#6
         fdfa.flight_distance / fdm.flight_duration_in_hr avg_speed, --#7
         ac.model,                                                   --#8
-        count(distinct seat_no) seats_in_a_plane,
-        ss.seats_sold seats_sold,
-        avg(tf.amount)*ss.seats_sold gain_per_flight0,
-        sum(tf.amount) / count(distinct seat_no) gain_per_flight1
--- select *
+        count(distinct seat_no) seats_in_a_plane,                   --#9
+        ss.seats_sold seats_sold,                                   --#10
+        gpf.gain_per_flight gain_per_flight                         --#11
 FROM dst_project.flights_v fv
             left join dst_project.aircrafts ac on fv.aircraft_code = ac.aircraft_code
             left join dst_project.airports ap on fv.arrival_airport = ap.airport_code
@@ -298,11 +302,12 @@ FROM dst_project.flights_v fv
             left join flight_duration_in_hr fdm on fv.scheduled_duration = fdm.flight_duration
             left join dst_project.ticket_flights tf on fv.flight_id = tf.flight_id
             left join seats_sold ss on fv.flight_id = ss.flight_id
+            left join gain_per_flight gpf on fv.flight_id = gpf.flight_id
 WHERE fv.departure_city = 'Анапа'
   AND (date_trunc('month', fv.scheduled_departure) in ('2017-01-01', '2017-02-01', '2017-12-01'))
  AND fv.status not in ('Cancelled')
 --  and fv.flight_id in (136119, 136120, 136122)
-group by 1, 2, 3, 4, 5, 6, 7, 8, 10--, 9
+group by 1, 2, 3, 4, 5, 6, 7, 8, 10, 11
   
 -- select a.model, count(distinct seat_no) seats_in_a_plane
 -- from dst_project.seats s join dst_project.aircrafts a on s.aircraft_code = a.aircraft_code
