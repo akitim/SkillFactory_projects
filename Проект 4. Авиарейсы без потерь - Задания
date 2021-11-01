@@ -261,7 +261,19 @@ select
 ), flight_duration_in_hr as (
 select distinct fv.scheduled_duration flight_duration,
        extract (HOUR from fv.scheduled_duration)::real + extract (MINUTE from fv.scheduled_duration)::real / 60.0 flight_duration_in_hr
-from dst_project.flights_v fv)
+from dst_project.flights_v fv
+
+), seats_sold as (
+select 
+        fv.flight_id,
+        count(bp.seat_no) seats_sold
+from dst_project.flights_v fv
+        left join dst_project.boarding_passes bp on fv.flight_id = bp.flight_id
+WHERE fv.departure_city = 'Анапа'
+ AND (date_trunc('month', fv.scheduled_departure) in ('2017-01-01', '2017-02-01', '2017-12-01'))
+ AND fv.status not in ('Cancelled')
+group by 1
+) 
 
 SELECT fv.flight_id,                                                --#1
         fv.departure_city,                                          --#2
@@ -273,8 +285,9 @@ SELECT fv.flight_id,                                                --#1
         fdfa.flight_distance / fdm.flight_duration_in_hr avg_speed, --#7
         ac.model,                                                   --#8
         count(distinct seat_no) seats_in_a_plane,
-        sum(tf.amount) gain_per_flight
-        
+        ss.seats_sold seats_sold,
+        avg(tf.amount)*ss.seats_sold gain_per_flight0,
+        sum(tf.amount) / count(distinct seat_no) gain_per_flight1
 -- select *
 FROM dst_project.flights_v fv
             left join dst_project.aircrafts ac on fv.aircraft_code = ac.aircraft_code
@@ -284,10 +297,12 @@ FROM dst_project.flights_v fv
             left join flight_distance_from_Anapa fdfa on fdfa.arrival_city = fv.arrival_city
             left join flight_duration_in_hr fdm on fv.scheduled_duration = fdm.flight_duration
             left join dst_project.ticket_flights tf on fv.flight_id = tf.flight_id
+            left join seats_sold ss on fv.flight_id = ss.flight_id
 WHERE fv.departure_city = 'Анапа'
   AND (date_trunc('month', fv.scheduled_departure) in ('2017-01-01', '2017-02-01', '2017-12-01'))
  AND fv.status not in ('Cancelled')
-group by 1, 2, 3, 4, 5, 6, 7, 8--, 9
+--  and fv.flight_id in (136119, 136120, 136122)
+group by 1, 2, 3, 4, 5, 6, 7, 8, 10--, 9
   
 -- select a.model, count(distinct seat_no) seats_in_a_plane
 -- from dst_project.seats s join dst_project.aircrafts a on s.aircraft_code = a.aircraft_code
