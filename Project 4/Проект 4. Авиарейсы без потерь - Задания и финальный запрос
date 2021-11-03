@@ -267,10 +267,12 @@ SELECT fv.flight_id, --#1 индентифакатор рейса
  ac.model aircraft_model, --#8 модель самолета
  count(DISTINCT seat_no) seats_in_a_plane, --#9 количество мест в самолете
  ss.seats_sold seats_sold, --#10 количество проданных билетов на рейс
- gpf.gain_per_flight gain_per_flight, --#11 выручка за рейс
- round(gpf.gain_per_flight - afc.price_per_tonn * 1e-6 * fc.g_per_pass_km * ss.seats_sold * fdfa.flight_distance) income_per_flight_eval1, --#12 1-я оценка прибыльности рейса
- round(gpf.gain_per_flight - afc.price_per_tonn * fc.tonn_per_hr * fdh.flight_duration_in_hr) income_per_flight_eval2 --#13 2-я оценка прибыльности рейса
-
+ count(tf.fare_conditions) / count(DISTINCT seat_no) economy_sold, --#11 количество проданных билетов на рейс по тарифу "Эконом"
+ ss.seats_sold - count(tf.fare_conditions) / count(DISTINCT seat_no) business_sold, --#12 количество проданных билетов на рейс по тарифу "Бизнес"
+ gpf.gain_per_flight gain_per_flight, --#13 выручка за рейс
+ round(gpf.gain_per_flight - afc.price_per_tonn * 1e-6 * fc.g_per_pass_km * ss.seats_sold * fdfa.flight_distance) income_per_flight_dist, --#14 оценка прибыльности рейса по дальности полета
+ round(gpf.gain_per_flight - afc.price_per_tonn * fc.tonn_per_hr * fdh.flight_duration_in_hr) income_per_flight_dur --#15 оценка прибыльности рейса по длительности полета
+ 
 FROM dst_project.flights_v fv
 LEFT JOIN dst_project.aircrafts ac ON fv.aircraft_code = ac.aircraft_code
 LEFT JOIN dst_project.airports ap ON fv.arrival_airport = ap.airport_code
@@ -287,7 +289,9 @@ WHERE fv.departure_city = 'Анапа'
   AND (date_trunc('month', fv.scheduled_departure) in ('2017-01-01',
                                                        '2017-02-01',
                                                        '2017-12-01'))
-  AND fv.status not in ('Cancelled') --  and fv.flight_id in (136119, 136120, 136122)
+  AND fv.status not in ('Cancelled')
+--   AND tf.fare_conditions in ('Economy')
+  
 GROUP BY 1,
          2,
          3,
@@ -297,9 +301,11 @@ GROUP BY 1,
          7,
          8,
          10,
-         11,
-         12,
-         13 
+        --  11,
+        --  12,
+         13,
+         14,
+         15
 ---------------------------------------------------------------------------------------------------------------
 -- ====================================================================
 /*
