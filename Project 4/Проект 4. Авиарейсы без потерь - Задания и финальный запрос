@@ -270,10 +270,6 @@
     WHERE tf.fare_conditions = 'Business'
     GROUP BY 1)
     
--- select es.flight_id, es.economy_sold, bs.business_sold
--- FROM economy_sold es join business_sold bs on es.flight_id = bs.flight_id
--- WHERE es.flight_id = 113320
-
 ---------------------------ОСНОВНОЙ ЗАПРОС------------------------------
 
 SELECT fv.flight_id, --#1 индентифакатор рейса
@@ -285,15 +281,15 @@ SELECT fv.flight_id, --#1 индентифакатор рейса
  fdfa.flight_distance, --#6 дальность рейса
  fdfa.flight_distance / fdh.flight_duration_in_hr avg_speed, --#7 средняя скорость самолета в рейсе
  ac.model aircraft_model, --#8 модель самолета
- count(DISTINCT seat_no) seats_in_a_plane, --#9 количество мест в самолете
+ count(DISTINCT s.seat_no) seats_in_a_plane, --#9 количество мест в самолете
  ss.seats_sold seats_sold, --#10 количество проданных билетов на рейс
- es.economy_sold economy_sold, --#11 количество проданных билетов на рейс в эконом-классе
- bs.business_sold business_sold, --#12 количество проданных билетов на рейс в бизнес-классе
---  count(tf.fare_conditions) / count(DISTINCT seat_no) economy_sold, --#11 количество проданных билетов на рейс в эконом-классе
---  ss.seats_sold - count(tf.fare_conditions) / count(DISTINCT seat_no) business_sold, --#12 количество проданных билетов на рейс в бизнес-классе
- gpf.gain_per_flight gain_per_flight, --#13 выручка за рейс
- round(gpf.gain_per_flight - afc.price_per_tonn * 1e-6 * fc.g_per_pass_km * ss.seats_sold * fdfa.flight_distance) income_per_flight_dist, --#14 оценка прибыльности рейса по дальности полета
- round(gpf.gain_per_flight - afc.price_per_tonn * fc.tonn_per_hr * fdh.flight_duration_in_hr) income_per_flight_dur --#15 оценка прибыльности рейса по длительности полета
+ count(DISTINCT (CASE WHEN s.fare_conditions = 'Economy' THEN s.seat_no END)) economy_seats_in_a_plane, --#11 количество проданных билетов на рейс в эконом-классе
+ es.economy_sold economy_sold, --#12 количество проданных билетов на рейс в эконом-классе
+ count(DISTINCT (CASE WHEN s.fare_conditions = 'Business' THEN s.seat_no END)) business_seats_in_a_plane, --#13 количество проданных билетов на рейс в бизнес-классе
+ bs.business_sold business_sold, --#14 количество проданных билетов на рейс в бизнес-классе
+ gpf.gain_per_flight gain_per_flight, --#15 выручка за рейс
+ round(gpf.gain_per_flight - afc.price_per_tonn * 1e-6 * fc.g_per_pass_km * ss.seats_sold * fdfa.flight_distance) income_per_flight_dist, --#16 оценка прибыльности рейса по дальности полета
+ round(gpf.gain_per_flight - afc.price_per_tonn * fc.tonn_per_hr * fdh.flight_duration_in_hr) income_per_flight_dur --#17 оценка прибыльности рейса по длительности полета
  
 FROM dst_project.flights_v fv
 LEFT JOIN dst_project.aircrafts ac ON fv.aircraft_code = ac.aircraft_code
@@ -325,11 +321,13 @@ GROUP BY 1,
          7,
          8,
          10,
-         11,
+        --  11,
          12,
-         13,
+        --  13,
          14,
-         15
+         15,
+         16,
+         17
 
 ---------------------------------------------------------------------------------------------------------------
 -- ====================================================================
