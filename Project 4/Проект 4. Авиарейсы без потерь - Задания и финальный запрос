@@ -203,9 +203,9 @@
  WITH Anapa_2017_fuel_cost AS
   (SELECT 1 month_2017,
           41435 price_per_tonn
-   UNION SELECT 2 month_2017,
+  UNION SELECT 2 month_2017,
                 39553 price_per_tonn
-   UNION SELECT 12 month_2017,
+  UNION SELECT 12 month_2017,
                 47101 price_per_tonn),
                 
 ---------------потребление самолетом топлива-----------------
@@ -213,7 +213,7 @@
   (SELECT 'Sukhoi Superjet-100' aircraft_model,
                                 1.9 tonn_per_hr,
                                 19 g_per_pass_km
-   UNION SELECT 'Boeing 737-300' aircraft_model,
+  UNION SELECT 'Boeing 737-300' aircraft_model,
                                  2.4 tonn_per_hr,
                                  26 g_per_pass_km),
                                  
@@ -221,38 +221,58 @@
       flight_distance_from_Anapa AS
   (SELECT 'Москва' arrival_city,
               1208 flight_distance
-   UNION SELECT 'Новокузнецк' arrival_city,
+  UNION SELECT 'Новокузнецк' arrival_city,
                          3661 flight_distance
-   UNION SELECT 'Белгород' arrival_city,
-                       636 flight_distance),
+  UNION SELECT 'Белгород' arrival_city,
+                      636 flight_distance),
                        
 ---------------фактическая продолжительность полета в минутах-----------------
       flight_duration_in_hr AS
   (SELECT DISTINCT fv.actual_duration flight_duration,
-                   EXTRACT (HOUR
+                  EXTRACT (HOUR
                             FROM fv.actual_duration)::real + EXTRACT (MINUTE
                                                                          FROM fv.actual_duration)::real / 60.0 flight_duration_in_hr
-   FROM dst_project.flights_v fv),
+  FROM dst_project.flights_v fv),
    
 ---------------кол-во проданных билетов-----------------
       seats_sold AS
   (SELECT fv.flight_id,
           count(bp.seat_no) seats_sold
-   FROM dst_project.flights_v fv
-   LEFT JOIN dst_project.boarding_passes bp ON fv.flight_id = bp.flight_id
-   WHERE fv.departure_city = 'Анапа'
+  FROM dst_project.flights_v fv
+  LEFT JOIN dst_project.boarding_passes bp ON fv.flight_id = bp.flight_id
+  WHERE fv.departure_city = 'Анапа'
      AND (date_trunc('month', fv.scheduled_departure) in ('2017-01-01',
                                                           '2017-02-01',
                                                           '2017-12-01'))
      AND fv.status not in ('Cancelled')
-   GROUP BY 1),
+  GROUP BY 1),
 
 ---------------выручка за рейс-----------------
       gain_per_flight AS
   (SELECT tf.flight_id flight_id,
           sum(tf.amount) gain_per_flight
-   FROM dst_project.ticket_flights tf
-   GROUP BY 1)
+  FROM dst_project.ticket_flights tf
+  GROUP BY 1),
+   
+---------------количество эконом-класс билетов-----------------
+      economy_sold AS
+   (SELECT tf.flight_id,
+           count(tf.fare_conditions) economy_sold
+    FROM dst_project.ticket_flights tf
+    WHERE tf.fare_conditions = 'Economy'
+    GROUP BY 1),
+    
+---------------количество бизнес-класс билетов-----------------
+      business_sold AS
+   (SELECT tf.flight_id,
+           count(tf.fare_conditions) business_sold
+    FROM dst_project.ticket_flights tf
+    WHERE tf.fare_conditions = 'Business'
+    GROUP BY 1)
+    
+-- select es.flight_id, es.economy_sold, bs.business_sold
+-- FROM economy_sold es join business_sold bs on es.flight_id = bs.flight_id
+-- WHERE es.flight_id = 113320
 
 ---------------------------ОСНОВНОЙ ЗАПРОС------------------------------
 
@@ -267,8 +287,10 @@ SELECT fv.flight_id, --#1 индентифакатор рейса
  ac.model aircraft_model, --#8 модель самолета
  count(DISTINCT seat_no) seats_in_a_plane, --#9 количество мест в самолете
  ss.seats_sold seats_sold, --#10 количество проданных билетов на рейс
- count(tf.fare_conditions) / count(DISTINCT seat_no) economy_sold, --#11 количество проданных билетов на рейс по тарифу "Эконом"
- ss.seats_sold - count(tf.fare_conditions) / count(DISTINCT seat_no) business_sold, --#12 количество проданных билетов на рейс по тарифу "Бизнес"
+ es.economy_sold economy_sold, --#11 количество проданных билетов на рейс в эконом-классе
+ bs.business_sold business_sold, --#12 количество проданных билетов на рейс в бизнес-классе
+--  count(tf.fare_conditions) / count(DISTINCT seat_no) economy_sold, --#11 количество проданных билетов на рейс в эконом-классе
+--  ss.seats_sold - count(tf.fare_conditions) / count(DISTINCT seat_no) business_sold, --#12 количество проданных билетов на рейс в бизнес-классе
  gpf.gain_per_flight gain_per_flight, --#13 выручка за рейс
  round(gpf.gain_per_flight - afc.price_per_tonn * 1e-6 * fc.g_per_pass_km * ss.seats_sold * fdfa.flight_distance) income_per_flight_dist, --#14 оценка прибыльности рейса по дальности полета
  round(gpf.gain_per_flight - afc.price_per_tonn * fc.tonn_per_hr * fdh.flight_duration_in_hr) income_per_flight_dur --#15 оценка прибыльности рейса по длительности полета
@@ -285,13 +307,15 @@ LEFT JOIN gain_per_flight gpf ON fv.flight_id = gpf.flight_id
 LEFT JOIN Anapa_2017_fuel_cost afc ON extract(MONTH
                                               FROM fv.scheduled_departure) = afc.month_2017
 LEFT JOIN fuel_consumption fc ON ac.model = fc.aircraft_model
+LEFT JOIN economy_sold es ON fv.flight_id = es.flight_id
+LEFT JOIN business_sold bs ON fv.flight_id = bs.flight_id
+
 WHERE fv.departure_city = 'Анапа'
   AND (date_trunc('month', fv.scheduled_departure) in ('2017-01-01',
-                                                       '2017-02-01',
-                                                       '2017-12-01'))
+                                                      '2017-02-01',
+                                                      '2017-12-01'))
   AND fv.status not in ('Cancelled')
---   AND tf.fare_conditions in ('Economy')
-  
+
 GROUP BY 1,
          2,
          3,
@@ -301,11 +325,12 @@ GROUP BY 1,
          7,
          8,
          10,
-        --  11,
-        --  12,
+         11,
+         12,
          13,
          14,
          15
+
 ---------------------------------------------------------------------------------------------------------------
 -- ====================================================================
 /*
